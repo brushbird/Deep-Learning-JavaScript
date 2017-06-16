@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Demo1</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <h1>编写高质量JavaScript代码的要点</h1>
+    <h2>书写可维护的代码（Writing MainTainable Code）</h2>
+    <p>可维护的代码意味着：可读的、一致的、可预测的、看上去就像是同一个人写的、已记录</p>
+    <h2>最小全局变量</h2>
+    <p>JavaScript通过函数管理作用域。在函数内部声明的变量只在这个函数内部，函数外面不可用。另一方面，全局变量就是在任何函数外面声明的或是未声明直接简单使用的。</p>
+    <textarea name="" id="" cols="60" rows="10" disabled="true">
+        
+        myglobal = "hello"; // 不推荐写法 
+        console.log(myglobal); // "hello" 
+        console.log(window.myglobal); // "hello" 
+        console.log(window["myglobal"]); // "hello" 
+        console.log(this.myglobal); // "hello"
+    </textarea>
+    <h2>全局变量的问题</h2>
+    <p>全局变量的问题在于，你的JavaScript应用程序和web页面上的所有代码都共享了这些全局变量，他们住在同一个全局命名空间，所以当程序的两个不同部分定义同名但不同作用的全局变量的时候，命名冲突在所难免。</p>
+    <p>要想和其他脚本成为好邻居的话，尽可能少的使用全局变量是很重要的。在书中后面提到的一些减少全局变量的策略，例如命名空间模式或是函数立即自动执行，但是要想让全局变量少最重要的还是始终使用var来声明变量。</p>
+    <textarea name="" id="" cols="50" rows="8" disabled="true">
+    	
+   	function sum(x, y) {
+   	  // 不推荐写法: 隐式全局变量 
+   	  result = x + y; //result为全局变量
+   	  //不声明的任何变量都会成为一个全局对象属性
+   	  return result;
+	}
+    </textarea>
+    <textarea name="" id="" cols="50" rows="8" disabled="true">
+    	
+   	function sum(x, y) {
+   	  var result = x + y; //result为局部变量
+   	  //经验法则是始终使用var声明变量
+   	  return result;
+	}
+    </textarea>
+    <p>另一个创建隐式全局变量的反例就是使用任务链进行部分var声明。</p>
+    <textarea name="" id="" cols="50" rows="8" disabled="true">
+	
+	// 反例，勿使用 
+	function foo() {
+	  var a = b = 0;
+	  //a是本地变量但是b却是全局变量
+	}
+    </textarea>
+    <textarea name="" id="" cols="50" rows="8" disabled="true">
+    	
+    	此现象发生的原因在于这个从右到左的赋值，首先，是赋值表达式b = 0，此情况下b是未声明的。这个表达式的返回值是0，然后这个0就分配给了通过var定义的这个局部变量a。换句话说，就好比你输入了：var a = (b = 0)
+    </textarea>
+    <h2>忘记var的副作用（Side Effects When Forgetting var）</h2>
+    <p>隐式全局变量和明确定义的全局变量间有些小的差异，就是通过delete操作符让变量未定义的能力。<br>&nbsp;&nbsp;--&gt;通过var创建的全局变量（任何函数之外的程序中创建）是不能被删除的。<br>&nbsp;&nbsp;--&gt;无var创建的隐式全局变量（无视是否在函数中创建）是能被删除的。</p>
+    <textarea name="" id="" cols="60" rows="20" disabled="true">
+    	
+	// 定义三个全局变量
+	var global_var = 1;
+	global_novar = 2; // 反面教材
+	(function () {
+	   global_fromfunc = 3; // 反面教材
+	}());
+	
+	// 试图删除
+	delete global_var; // false
+	delete global_novar; // true
+	delete global_fromfunc; // true
+
+	// 测试该删除
+	typeof global_var; // "number"
+	typeof global_novar; // "undefined"
+	typeof global_fromfunc; // "undefined"
+    </textarea>
+    <h2>单var形式（Single var Pattern）</h2>
+    <p>在函数顶部使用单var语句是比较有用的一种形式，其好处在于：<br>&nbsp;&nbsp;--&gt;提供了一个单一的地方去寻找功能所需要的所有局部变量<br>&nbsp;&nbsp;--&gt;防止变量在定义之前使用的逻辑错误<br>&nbsp;&nbsp;--&gt;帮助你记住声明的全局变量，因此较少了全局变量<br>&nbsp;&nbsp;--&gt;少代码（类型啊传值啊单线完成）</p>
+	<textarea name="" id="" cols="30" rows="10" disabled="true">
+
+    function func() {
+       var a = 1,
+           b = 2,
+           sum = a + b,
+           myobject = {},
+           i,
+           j;
+    }
+	</textarea>
+	<textarea name="" id="" cols="60" rows="10" disabled="true">
+		
+	可以使用一个var语句声明多个变量，并以逗号分隔。像这种初始化变量同时初始化值的做法是很好的。这样子可以防止逻辑错误（所有未初始化但声明的变量的初始值是undefined）和增加代码的可读性。在你看到代码后，你可以根据初始化的值知道这些变量大致的用途，例如是要当作对象呢还是当作整数来使。
+	</textarea>
+	<p>当你使用DOM（文档对象模型）引用时，你可以使用单一的var把DOM引用一起指定为局部变量，就如下面代码所示的：</p>
+	<textarea name="" id="" cols="60" rows="8" disabled>
+    
+    function updateElement() {
+       var el = document.getElementById("result"),
+           style = el.style;
+       // 使用el和style干点其他什么事...
+    }
+	</textarea>
+	<h2>预解析：var散布的问题（Hoisting：A Problem with Scattered vars）</h2>
+	<p>JavaScript中，你可以在函数的任何位置声明多个var语句，并且它们就好像是在函数顶部声明一样发挥作用，这种行为称为 hoisting（悬置/置顶解析/预解析）。当你使用了一个变量，然后不久在函数中又重新声明的话，就可能产生逻辑错误。对于JavaScript，只 要你的变量是在同一个作用域中（同一函数），它都被当做是声明的，即使是它在var声明前使用的时候。</p>
+	<textarea name="" id="" cols="40" rows="10" disabled>
+    
+    // 反例
+    myname = "global"; // 全局变量
+    function func() {
+        alert(myname); // "undefined"
+        var myname = "local";
+        alert(myname); // "local"
+    }
+    func();
+	</textarea>
+	<textarea name="" id="" cols="60" rows="10" disabled>
+
+	在这个例子中，你可能会以为第一个alert弹出的是”global”，第二个弹出”loacl”。这种期许是可以理解的，因为在第一个alert 的时候，myname未声明，此时函数肯定很自然而然地看全局变量myname，但是，实际上并不是这么工作的。第一个alert会弹 出”undefined”是因为myname被当做了函数的局部变量（尽管是之后声明的），所有的变量声明当被悬置到函数的顶部了。因此，为了避免这种混 乱，最好是预先声明你想使用的全部变量。
+	</textarea>
+	<p><i>“为了完整，我们再提一提执行层面的稍微复杂点的东西。代码处理分两个阶段，第一阶段是变量，函数声明，以及正常格式的参数创建，这是一个解析和进入上下文 的阶段。第二个阶段是代码执行，函数表达式和不合格的标识符（为声明的变量）被创建。但是，出于实用的目的，我们就采用了”hoisting”这个概念， 这种ECMAScript标准中并未定义，通常用来描述行为。”</i></p>
+	<h2>for 循环（for Loops）</h2>
+	
+</body>
+
+</html>
